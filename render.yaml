@@ -1,0 +1,28 @@
+# Render Blueprint. Deploy with: New + Blueprint (point at this repo).
+services:
+  - type: web
+    name: ai-receptionist
+    runtime: docker
+    # Whisper needs RAM. Use at least a 1 GB plan (e.g. "standard").
+    # The 512 MB free/starter tier will usually run out of memory.
+    plan: standard
+    healthCheckPath: /api/health
+    envVars:
+      - key: HOTEL_NAME
+        value: City Resort Hotel
+      - key: RECEPTIONIST_NAME
+        value: Daven
+      - key: HOTEL_LOCATION
+        value: 12 Kingsway Road, Osogbo, Osun State, Nigeria
+      - key: HOTEL_PHONE
+        value: "+234 800 000 0000"
+      - key: HOTEL_EMAIL
+        value: stay@cityresorthotel.com
+      - key: TTS_PROVIDER
+        value: edge
+      - key: TTS_VOICE
+        value: en-US-GuyNeural   # male voice (edge-tts)
+      - key: STT_MODEL
+        value: tiny
+      - key: PYTHON_VERSION
+        value: "3.11.9"

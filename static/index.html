@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Daven &middot; AI Receptionist</title>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#111c30; --panel2:#16223a; --line:#243349;
+    --gold:#d9b25a; --green:#37c08a; --txt:#e8eef7; --muted:#9fb0c7;
+    --you:#1f6feb; --bub:#1a2740;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:radial-gradient(1200px 600px at 70% -10%,#16284a 0,var(--bg) 60%);
+    color:var(--txt); min-height:100vh; display:flex; flex-direction:column; align-items:center;
+  }
+  .wrap{width:100%;max-width:520px;padding:18px;display:flex;flex-direction:column;height:100vh}
+
+  header{display:flex;align-items:center;gap:12px;padding:8px 4px 14px}
+  .logo{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:22px;
+        background:linear-gradient(145deg,#2a3b5e,#16223a);border:1px solid var(--line)}
+  h1{font-size:18px;margin:0;line-height:1.1}
+  .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .live{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;
+         display:flex;flex-direction:column;flex:1;overflow:hidden}
+  .agent{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--line);
+         background:linear-gradient(180deg,rgba(217,178,90,.08),transparent)}
+  .avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(145deg,#d9b25a,#b8923f);
+          color:#1a1304;display:grid;place-items:center;font-weight:700;font-size:20px}
+  .agent b{font-size:16px}
+  .agent small{color:var(--muted);font-size:12px}
+
+  .status{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px;font-size:13px;
+          color:var(--muted);border-bottom:1px solid var(--line);min-height:38px}
+  .status .pill{padding:3px 10px;border-radius:999px;background:var(--panel2);border:1px solid var(--line)}
+  .status.thinking .pill{color:var(--gold);border-color:var(--gold)}
+  .status.speaking .pill{color:var(--green);border-color:var(--green)}
+  .status.listening .pill{color:#ff6b6b;border-color:#ff6b6b}
+
+  .log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+  .msg{max-width:82%;padding:11px 14px;border-radius:16px;font-size:14.5px;line-height:1.45}
+  .bot{align-self:flex-start;background:var(--bub);border:1px solid var(--line);border-bottom-left-radius:5px}
+  .me{align-self:flex-end;background:var(--you);border-bottom-right-radius:5px}
+  .meta{font-size:11px;color:var(--muted);margin-top:5px;opacity:.85}
+  .log:empty::before{content:"Tap Start to talk with Daven.";color:var(--muted);align-self:center;margin-top:30px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;padding:10px 14px 0}
+  .chip{font-size:12px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);
+        padding:6px 11px;border-radius:999px;cursor:pointer;transition:.15s}
+  .chip:hover{color:var(--txt);border-color:var(--gold)}
+
+  .composer{padding:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+  .row{display:flex;gap:10px;align-items:center}
+  .mic{width:60px;height:60px;border-radius:50%;border:none;cursor:pointer;flex:none;
+       background:linear-gradient(145deg,#2a3b5e,#16223a);border:1px solid var(--line);color:var(--txt);
+       font-size:22px;transition:.15s;position:relative}
+  .mic:hover{border-color:var(--gold)}
+  .mic.rec{background:linear-gradient(145deg,#ff6b6b,#c0392b);color:#fff}
+  .mic.rec::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid #ff6b6b;
+       animation:pulse 1.2s infinite}
+  @keyframes pulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.5);opacity:0}}
+  .input{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+         border-radius:14px;padding:13px 14px;font-size:14px;outline:none}
+  .input:focus{border-color:var(--gold)}
+  .hint{text-align:center;font-size:11px;color:var(--muted)}
+
+  /* Start overlay */
+  .overlay{position:fixed;inset:0;background:rgba(7,12,22,.92);display:grid;place-items:center;z-index:10}
+  .overlay .card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:34px 30px;
+                 text-align:center;max-width:360px;width:90%}
+  .overlay .big{width:84px;height:84px;border-radius:50%;margin:0 auto 18px;
+       background:linear-gradient(145deg,#d9b25a,#b8923f);color:#1a1304;display:grid;place-items:center;
+       font-weight:800;font-size:30px}
+  .overlay h2{margin:0 0 8px;font-size:21px}
+  .overlay p{color:var(--muted);font-size:14px;margin:0 0 22px;line-height:1.5}
+  .start{width:100%;padding:15px;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;
+       background:linear-gradient(145deg,#37c08a,#1f9c6a);color:#04241a}
+  .start:hover{filter:brightness(1.07)}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- Connection / Start overlay -->
+<div class="overlay" id="overlay">
+  <div class="card">
+    <div class="big">D</div>
+    <h2 id="ovTitle">Connect with Daven</h2>
+    <p id="ovText">Your virtual receptionist at <b id="ovHotel">the hotel</b>. Tap start to connect and begin.</p>
+    <button class="start" id="startBtn">Start</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="logo">&#127976;</div>
+    <div>
+      <h1 id="hotelName">Hotel</h1>
+      <div class="sub">AI Receptionist &middot; powered by voice</div>
+    </div>
+    <div class="live"><span class="dot" id="liveDot"></span><span id="liveTxt">Offline</span>
+      <button class="reset" id="resetBtn" title="Start a fresh conversation">New</button>
+    </div>
+  </header>
+
+  <div class="panel">
+    <div class="agent">
+      <div class="avatar">D</div>
+      <div><b>Daven</b><br><small>Virtual Receptionist</small></div>
+    </div>
+
+    <div class="status" id="status"><span class="pill" id="pill">Idle</span></div>
+
+    <div class="log" id="log"></div>
+
+    <div class="chips" id="chips"></div>
+
+    <div class="composer">
+      <div class="row">
+        <button class="mic" id="mic" title="Tap to talk">&#127908;</button>
+        <input class="input" id="text" placeholder="Or type your question..." autocomplete="off" />
+      </div>
+      <div class="hint">Tap the mic, speak, then tap again to send. Allow microphone access when asked.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = ""; // same origin; if your frontend lives elsewhere, set e.g. "https://your-app.onrender.com"
+const $ = id => document.getElementById(id);
+
+// Persistent session id so a multi-turn booking remembers itself across turns.
+let sessionId = localStorage.getItem("daven_session");
+if (!sessionId) {
+  sessionId = "web-" + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + Math.random());
+  localStorage.setItem("daven_session", sessionId);
+}
+const jsonHeaders = () => ({ "Content-Type": "application/json", "X-Session-Id": sessionId });
+
+let connected = false;
+let mediaRec = null, chunks = [], audioEls = [];
+let lastStatus = null;
+
+function setLive(on){ $("liveDot").style.background = on ? "#37c08a":"#9fb0c7"; $("liveTxt").textContent = on ? "Live":"Offline"; }
+function setStatus(state, label){
+  const s = $("status"); s.className = "status" + (state ? " "+state : "");
+  $("pill").textContent = label || "Idle";
+}
+
+function playAudio(b64, onDone){
+  if(!b64){ if(onDone) onDone(); return; }
+  const a = new Audio("data:audio/mpeg;base64," + b64);
+  audioEls.push(a);
+  setStatus("speaking", "Daven is speaking...");
+  a.onended = ()=>{ setStatus("", "Idle"); if(onDone) onDone(); };
+  a.onerror = ()=>{ setStatus("", "Idle"); if(onDone) onDone(); };
+  a.play().catch(()=>{ setStatus("", "Idle"); if(onDone) onDone(); });
+}
+
+function addMsg(who, text, meta){
+  const log = $("log");
+  const div = document.createElement("div");
+  div.className = "msg " + who;
+  div.textContent = text;
+  if(meta){ const m = document.createElement("div"); m.className="meta"; m.textContent=meta; div.appendChild(m); }
+  log.appendChild(div); log.scrollTop = log.scrollHeight;
+  return div;
+}
+
+function stopOtherAudio(){ audioEls.forEach(a=>{try{a.pause()}catch(e){}}); audioEls=[]; }
+
+function handleReply(data, showTranscript){
+  if(showTranscript && data.transcript) addMsg("me", data.transcript);
+  else if(showTranscript) addMsg("me", "(nothing heard)");
+  const bot = addMsg("bot", data.reply || "...", data.status ? "("+data.status+")" : "");
+  playAudio(data.audio);
+}
+
+/* ---- greeting ---- */
+async function connect(){
+  try{
+    setLive(false); setStatus("", "Connecting...");
+    const r = await fetch(API + "/api/health"); const h = await r.json();
+    $("hotelName").textContent = h.hotel || "Hotel"; $("ovHotel").textContent = h.hotel || "the hotel";
+    const g = await fetch(API + "/api/greeting", { headers: { "X-Session-Id": sessionId } }).then(r=>r.json());
+    if (g.session_id) { sessionId = g.session_id; localStorage.setItem("daven_session", sessionId); }
+    connected = true; setLive(true);
+    $("overlay").classList.add("hidden");
+    addMsg("bot", g.text);
+    playAudio(g.audio);
+  }catch(e){
+    setStatus("", "Connection failed");
+    $("ovTitle").textContent = "Connection failed";
+    $("ovText").innerHTML = "Could not reach the server. Check it is running, then tap start again.<br><small>"+e+"</small>";
+    console.error(e);
+  }
+}
+$("startBtn").addEventListener("click", connect);
+
+/* ---- voice ---- */
+async function startRec(){
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    mediaRec = new MediaRecorder(stream);
+    chunks = [];
+    mediaRec.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
+    mediaRec.onstop = async () => {
+      stream.getTracks().forEach(t=>t.stop());
+      const blob = new Blob(chunks, {type:"audio/webm"}); chunks=[];
+      await sendVoice(blob);
+    };
+    mediaRec.start();
+    stopOtherAudio();
+    setStatus("listening","Listening... tap again to send");
+  }catch(e){ alert("Microphone access is needed for voice. You can still type below."); console.error(e); }
+}
+function stopRec(){ if(mediaRec && mediaRec.state !== "inactive") mediaRec.stop(); }
+
+async function sendVoice(blob){
+  setStatus("thinking","Thinking...");
+  const fd = new FormData(); fd.append("audio", blob, "speech.webm"); fd.append("session", sessionId);
+  try{
+    const data = await fetch(API+"/api/chat",{method:"POST",headers:{"X-Session-Id":sessionId},body:fd}).then(r=>r.json());
+    handleReply(data, true);
+  }catch(e){ setStatus("","Idle"); addMsg("bot","Sorry, I had trouble understanding that. Could you try again?"); }
+}
+
+let recording=false;
+$("mic").addEventListener("click", ()=>{
+  if(!connected){ alert("Tap Start first."); return; }
+  recording = !recording;
+  $("mic").classList.toggle("rec", recording);
+  $("mic").innerHTML = recording ? "&#9209;" : "&#127908;";
+  if(recording) startRec(); else { stopRec(); }
+});
+
+/* ---- text fallback ---- */
+async function sendText(){
+  const t = $("text").value.trim(); if(!t) return;
+  $("text").value="";
+  setStatus("thinking","Thinking...");
+  try{
+    const data = await fetch(API+"/api/text",{
+      method:"POST",headers:jsonHeaders(),
+      body:JSON.stringify({text:t, session:sessionId})
+    }).then(r=>r.json());
+    handleReply(data, false);
+    addMsg("me", t); // show typed text too
+  }catch(e){ setStatus("","Idle"); addMsg("bot","Sorry, something went wrong. Try again."); }
+}
+$("text").addEventListener("keydown", e=>{ if(e.key==="Enter") sendText(); });
+$("resetBtn").addEventListener("click", newChat);
+
+// Reset: start a fresh conversation / new booking.
+async function newChat(){
+  if(!connected) return;
+  try{ await fetch(API+"/api/reset",{method:"POST",headers:{"X-Session-Id":sessionId}}); }catch(e){}
+  $("log").innerHTML = ""; lastStatus = null; setStatus("","Idle");
+  const g = await fetch(API+"/api/greeting",{headers:{"X-Session-Id":sessionId}}).then(r=>r.json());
+  addMsg("bot", g.text); playAudio(g.audio);
+}
+
+/* ---- suggestion chips ---- */
+async function loadChips(){
+  try{
+    const t = await fetch(API+"/api/topics").then(r=>r.json());
+    const box=$("chips"); (t.topics||[]).slice(0,8).forEach(label=>{
+      const c=document.createElement("div"); c.className="chip"; c.textContent=label;
+      c.onclick=()=>{ $("text").value = label; $("text").focus(); };
+      box.appendChild(c);
+    });
+  }catch(e){}
+}
+loadChips();
+</script>
+</body>
+</html>
