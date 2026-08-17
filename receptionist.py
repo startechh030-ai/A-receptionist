@@ -1,20 +1,18 @@
 """
-The "brain" of the AI Receptionist (v2 -- with multi-turn booking).
+The "brain" of the AI Receptionist (FINAL v2 -- multi-turn booking + name memory).
 
 SEMI-AI: there is no large language model. We match what the guest said against
-TAGS (keyword groups). On top of that, a simple state machine walks the guest
-through a real booking, collecting one detail at a time:
+TAGS (keyword groups). A small state machine then walks the guest through a real
+booking, one detail at a time:
 
     name -> check-in date -> check-out date -> room type -> guests -> confirm
 
-While collecting, the guest can still ask a side question ("what are your
-prices?"); Daven answers it, then continues the booking where it left off.
-
-Rules (unchanged from v1):
+Rules:
   * Confident tag match        -> answer that topic
   * 1 weak / ambiguous match   -> "Could you be more specific..."
   * No match / off-topic       -> "Let's go back to your booking..."
   * Social (hi/thanks/bye)     -> answered directly
+  * Guest introduces themselves -> greet by name AND remember it
 """
 import random
 import re
@@ -48,6 +46,10 @@ STRONG_WORDS = {
     "confirmation", "reservation", "reserve", "parking", "payment",
     "amenities", "pool", "gym", "dog", "cat", "pet", "pets", "suite",
     "deluxe", "executive", "internet",
+    "secure", "security", "safe", "safety", "id", "passport",
+    "identification", "license", "document", "documents",
+    "restaurant", "lunch", "dinner", "menu", "meal", "meals", "food", "dine",
+    "swimming", "spa", "ac", "generator", "laundry",
 }
 CONFIDENT_HITS = 2
 
@@ -62,7 +64,7 @@ class Intent:
 
 
 # --------------------------------------------------------------------------
-# THE KNOWLEDGE BASE -- edit freely.
+# THE KNOWLEDGE BASE (the "tags") -- edit freely.
 # --------------------------------------------------------------------------
 INTENTS: List[Intent] = [
     Intent("greeting", "greeting", social=True,
@@ -120,7 +122,9 @@ INTENTS: List[Intent] = [
                     "step-by-step directions, you can also call us at {phone}."),
     Intent("amenities", "our amenities",
            keywords=["amenity", "amenities", "facility", "facilities", "features", "offer",
-                     "what do you have", "services", "include", "included", "what's included"],
+                     "what do you have", "services", "include", "included", "what's included",
+                     "pool", "swimming pool", "gym", "fitness", "spa", "air conditioning",
+                     "ac", "generator", "power", "electricity", "laundry", "bar", "lounge"],
            response="{hotel} offers {amenities}. We want your stay to be as comfortable and "
                     "convenient as possible. Is there a specific facility you'd like to know "
                     "more about?"),
@@ -200,6 +204,9 @@ YES_KEYWORDS = {"yes", "yeah", "yep", "yes please", "correct", "sure", "ok", "ok
                 "confirmed", "sounds good", "perfect"}
 NO_KEYWORDS = {"no", "nope", "wrong", "incorrect", "change", "not right",
                "that's wrong", "don't", "do not"}
+ACK_WORDS = {"ok", "okay", "k", "sure", "yes", "yeah", "yep", "cool",
+             "alright", "all right", "fine", "got it"}
+
 
 # --------------------------------------------------------------------------
 # Matching helpers
@@ -228,7 +235,6 @@ def _keyword_hits(keywords, norm_text, tokens):
 
 
 def analyze(transcript: str):
-    """Return list of {intent, score, has_strong} for matched intents."""
     norm = _normalize(transcript)
     tokens = set(norm.split())
     scored = []
@@ -272,7 +278,7 @@ def _social_intent(norm: str):
 # Sessions (in-memory; one per browser)
 # --------------------------------------------------------------------------
 def new_session():
-    return {"state": "idle", "slot": None, "draft": {}, "reference": None}
+    return {"state": "idle", "slot": None, "name": None, "draft": {}, "reference": None}
 
 
 def reset_session(s):
@@ -280,10 +286,11 @@ def reset_session(s):
     s["slot"] = None
     s["draft"] = {}
     s["reference"] = None
+    # keep s["name"] so Daven still remembers who they are after a booking
 
 
 # --------------------------------------------------------------------------
-# Slot extractors -- turn the guest's words into a clean value (or None).
+# Slot extractors
 # --------------------------------------------------------------------------
 QUESTION_TOKENS = {
     "what", "how", "when", "where", "why", "which", "who", "price", "prices",
@@ -291,25 +298,64 @@ QUESTION_TOKENS = {
     "book", "booking", "room", "check", "amenities", "breakfast", "parking",
     "pay", "payment", "available", "internet", "contact", "number",
 }
+NON_NAME_WORDS = {
+    "urgent", "important", "fine", "good", "great", "okay", "ok", "awesome",
+    "amazing", "terrible", "awful", "serious", "emergency", "crazy", "funny",
+    "nice", "cool", "perfect", "true", "false", "ready", "wrong", "right",
+    "yes", "no", "maybe", "here", "there", "done", "over",
+}
 
-_NAME_PREFIXES = ["my name is", "name is", "i am called", "i'm called",
-                  "this is", "call me", "i am", "i'm", "it's", "its", "the"]
+_NAME_PREFIXES = ["my name is", "my name's", "name is", "name's", "the name is",
+                  "i am called", "i'm called", "this is", "call me", "i am", "i'm",
+                  "it's", "its", "the"]
+_FILLERS = {"ok", "okay", "k", "yeah", "yes", "yep", "hi", "hello", "hey",
+            "well", "so", "um", "uh", "please", "ah", "oh", "and", "actually"}
 
 
-def _extract_name(norm):
-    text = norm
-    for p in _NAME_PREFIXES:
-        if text.startswith(p + " ") or text == p:
-            text = text[len(p):].strip()
-            break
-    if not text or any(t in QUESTION_TOKENS for t in text.split()):
+def _clean_name(cand):
+    """Validate a candidate string into a proper Name, or None."""
+    if not cand:
         return None
-    words = text.split()
+    words = cand.split()
     if not (1 <= len(words) <= 4):
+        return None
+    if any(t in QUESTION_TOKENS for t in words):
+        return None
+    if any(w in NON_NAME_WORDS for w in words):
         return None
     if not all(w.replace("'", "").replace("-", "").isalpha() for w in words):
         return None
     return " ".join(w.capitalize() for w in words)
+
+
+def _extract_name(norm):
+    """Booking-slot extractor: the user is known to be giving a name."""
+    toks = norm.split()
+    while toks and toks[0] in _FILLERS:   # drop leading 'ok', 'hi', etc.
+        toks = toks[1:]
+    text = " ".join(toks)
+    for p in _NAME_PREFIXES:
+        if text.startswith(p + " ") or text == p:
+            text = text[len(p):].strip()
+            break
+    return _clean_name(text)
+
+
+# Matches "my name is X", "name's X", "call me X", "this is X", "I'm called X"
+_NAME_INTRO = re.compile(
+    r"(?:my name is|my name's|name is|name's|the name is|call me|"
+    r"i am called|i'm called|this is)\s+(.*)")
+
+
+def _detect_name(norm):
+    """Catch a name introduction in idle chat (e.g. 'ok, my name is Destiny')."""
+    m = _NAME_INTRO.search(norm)
+    if not m:
+        return None
+    cand = m.group(1).strip()
+    cand = re.split(r"\b(and|i want|i'd|i would|i'm|i am|how|what|can you|"
+                    r"do you|could you|is there|are there)\b", cand)[0].strip()
+    return _clean_name(cand)
 
 
 _MONTHS = ("january|february|march|april|may|june|july|august|september|october|"
@@ -402,8 +448,8 @@ def _prompt(slot, draft):
     if slot == "name":
         return "Great! Let's get your booking started. What's your full name?"
     if slot == "check_in":
-        return (f"Nice to meet you, {draft.get('name','')}. What date would you like to "
-                f"check in? You can say something like 'December 25th' or 'tomorrow'.")
+        return ("What date would you like to check in? You can say something like "
+                "'December 25th' or 'tomorrow'.")
     if slot == "check_out":
         return "And what date would you like to check out?"
     if slot == "room_type":
@@ -417,7 +463,7 @@ def _prompt(slot, draft):
 
 def _ack(slot, value):
     msgs = {
-        "name": f"Got it, {value}.",
+        "name": f"Nice to meet you, {value}.",
         "check_in": f"Noted, checking in {value}.",
         "check_out": f"Great, checking out {value}.",
         "room_type": f"Excellent choice, the {value}.",
@@ -495,7 +541,6 @@ def respond(transcript: str, session: dict = None) -> Reply:
 
     # ---- Mid-booking: collecting a slot --------------------------------
     if session["state"] == "booking" and session["slot"] in EXTRACTORS:
-        # allow the guest to abort
         if _any_phrase(ABORT_KEYWORDS, norm):
             reset_session(session)
             return Reply("No problem, I've cancelled that booking. Is there anything else "
@@ -514,7 +559,6 @@ def respond(transcript: str, session: dict = None) -> Reply:
             return Reply(_ack(slot, value) + " " + _prompt(nxt, session["draft"]),
                          "book", "booking")
 
-        # couldn't read the value -- maybe a side question, else re-ask
         side = _side_question(norm)
         social = _social_intent(norm)
         if social:
@@ -526,45 +570,67 @@ def respond(transcript: str, session: dict = None) -> Reply:
 
     # ---- Idle: normal intent matching ----------------------------------
     best = _best_intent(norm)
-    if not best:
-        return Reply(OFF_TOPIC.format(**CTX), None, "off_topic")
+    confident = bool(best) and (best["score"] >= CONFIDENT_HITS or best["has_strong"])
+    name = _detect_name(norm)
 
-    if best["intent"].social:
+    # 1) A confident NON-social intent wins (prices, location, booking, ...).
+    if confident and not best["intent"].social:
+        if best["intent"].id == "book":
+            session["state"] = "booking"
+            known = session.get("name") or name  # they may have said it just now
+            if known:
+                session["draft"]["name"] = known
+                session["slot"] = "check_in"
+                return Reply(f"Great, {known}! Let's get your booking started. "
+                             + _prompt("check_in", session["draft"]), "book", "booking")
+            session["slot"] = "name"
+            return Reply(_prompt("name", {}), "book", "booking")
         return Reply(best["intent"].response.format(**CTX), best["intent"].id, "ok")
 
-    # Start a booking
-    if best["intent"].id == "book" and (best["score"] >= CONFIDENT_HITS or best["has_strong"]):
-        session["state"] = "booking"
-        session["slot"] = "name"
-        return Reply(_prompt("name", {}), "book", "booking")
+    # 2) A name introduction beats weak / vague / off-topic replies.
+    if name:
+        session["name"] = name
+        return Reply(
+            f"Nice to meet you, {name}! I'm {cfg.RECEPTIONIST_NAME} at "
+            f"{cfg.HOTEL_NAME}. How can I help you today \u2014 would you like to "
+            f"book a room, hear our prices, or ask about our location?",
+            "name_intro", "ok")
 
-    if best["score"] >= CONFIDENT_HITS or best["has_strong"]:
+    # 3) Social (hi / thanks / bye).
+    if best and best["intent"].social:
         return Reply(best["intent"].response.format(**CTX), best["intent"].id, "ok")
 
-    # weak / ambiguous
-    scored = analyze(norm)
-    scored.sort(key=lambda s: (s["score"], s["has_strong"]), reverse=True)
-    topics = " or ".join(s["intent"].label for s in scored[:2])
-    return Reply(MORE_SPECIFIC.format(topics=topics, **CTX), None, "vague")
+    # 4) Bare acknowledgment (ok / sure / yes).
+    if norm in ACK_WORDS:
+        return Reply("Great! How can I help you? You can ask about rooms, prices, "
+                     "booking, or our location.", None, "ok")
+
+    # 5) Weak / ambiguous match.
+    if best:
+        scored = analyze(norm)
+        scored.sort(key=lambda s: (s["score"], s["has_strong"]), reverse=True)
+        topics = " or ".join(s["intent"].label for s in scored[:2])
+        return Reply(MORE_SPECIFIC.format(topics=topics, **CTX), None, "vague")
+
+    # 6) Off-topic.
+    return Reply(OFF_TOPIC.format(**CTX), None, "off_topic")
 
 
 def topics() -> List[str]:
     return [i.label for i in INTENTS if not i.social]
 
 
-if __name__ == "__main__":
-    # Single-turn sanity checks (idle).
-    for q in ["hi", "how much is a room", "where is the hotel", "room",
-              "tell me a joke", "cancel my booking"]:
-        r = respond(q)
-        print(f"[{r.status:9}] {q!r:26} -> {r.text[:64]}")
+def tags_overview() -> str:
+    """Human-readable list of all tags and their keywords (for inspection)."""
+    lines = []
+    for it in INTENTS:
+        tag = "[social] " if it.social else ""
+        lines.append(f"{tag}{it.id} ({it.label}): " + ", ".join(it.keywords))
+    return "\n".join(lines)
 
-    print("\n--- Multi-turn booking simulation ---")
-    s = new_session()
-    for q in ["i want to book a room", "my name is ada obi", "december 25th",
-              "actually what are your prices", "28th of december", "deluxe",
-              "two", "yes"]:
-        r = respond(q, s)
-        print(f"USER: {q}")
-        print(f"DAVEN: {r.text}")
-        print(f"   [state={s['state']} slot={s['slot']} draft={s['draft']}]\n")
+
+if __name__ == "__main__":
+    for q in ["do you have a pool", "is it secure", "do i need id",
+              "ok my name is destiny", "how much is a room"]:
+        r = respond(q)
+        print(f"[{r.status:9}] {q!r:24} -> {r.intent}: {r.text[:50]}")

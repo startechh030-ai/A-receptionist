@@ -125,5 +125,3 @@ automatically falls back to Google TTS (gTTS) so the demo never goes silent.
 - **Adding topics:** add a new `Intent(...)` block in `receptionist.py`.
 - **Multi-turn booking collection** (asking name → dates → confirm in sequence)
   can be added later with a small per-session memory — kept out of v1 to stay simple.
-# A-receptionist
-# A-receptionist
