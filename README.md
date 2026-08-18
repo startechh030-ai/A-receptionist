@@ -118,6 +118,41 @@ automatically falls back to Google TTS (gTTS) so the demo never goes silent.
 
 ---
 
+## V3 — Call mode (phone-call experience)
+
+A new **call UI** and **Call API** turn the bot into a phone receptionist.
+
+**Frontend flow:** tap **Call** → ringback sound while Render boots (cold-start
+safe) → live call screen with timer. A **heartbeat** (`/api/call/heartbeat`)
+returns a randomised **tick** every few seconds to confirm the connection; if a
+ping fails it shows "reconnecting" and resumes on reconnect. If the user is
+silent too long, Daven says *"Hello, do I confirm you can hear me?"* (×3) then
+*"looks like you've disconnected… I'll end the call"*.
+
+**Conversation script:** name → **Sir/Ma** (guessed from the name; if unknown,
+Daven asks) → help → **stub price** → **payment** (Card/Transfer/Cheque — any
+number succeeds) → **room number** + **ID card** → move-in date → **warm
+closing** → call ends.
+
+**UI triggers:** Daven's replies carry a `ui` field the frontend renders:
+- `{type:"payment_options", options:[...]}` — pick a method
+- `{type:"payment_form", method}` — enter any number (stub payment)
+- `{type:"id_card", name, room, ref}` — booking confirmation card
+
+### Call API
+| Method | Path | Body | Returns |
+|---|---|---|---|
+| POST | `/api/call/start` | – | greeting line + `audio` + `state` + `call_status` |
+| POST | `/api/call/say` | `{text}` **or** `audio` file | `reply`, `audio`, `ui`, `state`, `call_status` |
+| POST | `/api/call/ui` | `{action,value}` | `reply`, `audio`, `ui` (payment/id actions) |
+| POST | `/api/call/silence` | – | "can you hear me?" / disconnect line + `call_status` |
+| POST | `/api/call/heartbeat` | – | `{tick, call_status, state}` |
+| POST | `/api/call/end` | – | `summary`, `call_status:"ended"` |
+
+Ready-to-use client: **`frontend.config.js`** (`DavenCall.start / say / ui /
+silence / heartbeat / end`). The v2 free-chat API (`/api/text`, `/api/chat`) is
+still available unchanged.
+
 ## Notes & next steps
 
 - **Whisper accuracy:** "tiny" is fastest but least accurate. For a sharper ear,

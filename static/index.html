@@ -3,299 +3,328 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Daven &middot; AI Receptionist</title>
+<title>Daven &middot; City Resort Hotel</title>
 <style>
   :root{
-    --bg:#0b1220; --panel:#111c30; --panel2:#16223a; --line:#243349;
-    --gold:#d9b25a; --green:#37c08a; --txt:#e8eef7; --muted:#9fb0c7;
+    --bg:#070d18; --panel:#0f1a2e; --panel2:#16243d; --line:#243349;
+    --gold:#d9b25a; --green:#37c08a; --red:#ff5c5c; --txt:#e8eef7; --muted:#9fb0c7;
     --you:#1f6feb; --bub:#1a2740;
   }
   *{box-sizing:border-box}
-  body{
-    margin:0; font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
-    background:radial-gradient(1200px 600px at 70% -10%,#16284a 0,var(--bg) 60%);
-    color:var(--txt); min-height:100vh; display:flex; flex-direction:column; align-items:center;
-  }
-  .wrap{width:100%;max-width:520px;padding:18px;display:flex;flex-direction:column;height:100vh}
+  body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:radial-gradient(900px 500px at 50% -10%,#15264a 0,var(--bg) 60%);
+    color:var(--txt);min-height:100vh;display:flex;flex-direction:column;align-items:center}
+  .app{width:100%;max-width:480px;height:100vh;display:flex;flex-direction:column;padding:14px}
+  .screen{display:none;flex:1;flex-direction:column}.screen.show{display:flex}
 
-  header{display:flex;align-items:center;gap:12px;padding:8px 4px 14px}
-  .logo{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:22px;
-        background:linear-gradient(145deg,#2a3b5e,#16223a);border:1px solid var(--line)}
-  h1{font-size:18px;margin:0;line-height:1.1}
-  .sub{font-size:12px;color:var(--muted);margin-top:2px}
-  .live{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
-  .dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
-  .reset{margin-left:8px;background:var(--panel2);border:1px solid var(--line);color:var(--muted);
-         border-radius:8px;padding:4px 9px;font-size:11px;cursor:pointer}
-  .reset:hover{color:var(--txt);border-color:var(--gold)}
+  /* ---- idle ---- */
+  #idle{align-items:center;justify-content:center;text-align:center}
+  .brand{font-size:20px;font-weight:700;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:34px}
+  .avatar{width:118px;height:118px;border-radius:50%;margin:0 auto 22px;
+    background:linear-gradient(145deg,#d9b25a,#b8923f);color:#1a1304;display:grid;place-items:center;
+    font-weight:800;font-size:46px;box-shadow:0 12px 40px rgba(217,178,90,.25)}
+  .callbtn{width:74px;height:74px;border-radius:50%;border:none;cursor:pointer;margin:6px auto;
+    background:linear-gradient(145deg,#37c08a,#1f9c6a);color:#04241a;font-size:30px;
+    box-shadow:0 10px 30px rgba(55,192,138,.4);transition:.15s}
+  .callbtn:hover{transform:translateY(-2px)}
+  .calllabel{margin-top:10px;color:var(--muted);font-size:13px}
 
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;
-         display:flex;flex-direction:column;flex:1;overflow:hidden}
-  .agent{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--line);
-         background:linear-gradient(180deg,rgba(217,178,90,.08),transparent)}
-  .avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(145deg,#d9b25a,#b8923f);
-          color:#1a1304;display:grid;place-items:center;font-weight:700;font-size:20px}
-  .agent b{font-size:16px}
-  .agent small{color:var(--muted);font-size:12px}
+  /* ---- call ---- */
+  .topbar{display:flex;align-items:center;gap:8px;padding:6px 4px 10px}
+  .topbar .who{font-size:15px;font-weight:600}
+  .topbar .small{color:var(--muted);font-size:11px}
+  .conn{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+  .conn .d{width:8px;height:8px;border-radius:50%;background:var(--green)}
+  .conn.off .d{background:var(--red)}
+  .conn .bars{display:flex;gap:2px;align-items:flex-end;height:12px}
+  .conn .bars i{width:3px;background:var(--green);border-radius:1px;animation:eq .9s infinite ease-in-out}
+  .conn .bars i:nth-child(2){animation-delay:.2s}.conn .bars i:nth-child(3){animation-delay:.4s}
+  .conn.off .bars i{background:var(--red)}
+  @keyframes eq{0%,100%{height:3px}50%{height:12px}}
 
-  .status{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px;font-size:13px;
-          color:var(--muted);border-bottom:1px solid var(--line);min-height:38px}
-  .status .pill{padding:3px 10px;border-radius:999px;background:var(--panel2);border:1px solid var(--line)}
-  .status.thinking .pill{color:var(--gold);border-color:var(--gold)}
-  .status.speaking .pill{color:var(--green);border-color:var(--green)}
-  .status.listening .pill{color:#ff6b6b;border-color:#ff6b6b}
-  .status.warm .pill{color:var(--green);border-color:#2a4a3a}
+  .stage{display:flex;flex-direction:column;align-items:center;padding:8px 0 12px}
+  .pulse{width:104px;height:104px;border-radius:50%;position:relative;display:grid;place-items:center;
+    background:linear-gradient(145deg,#2a3b5e,#16223a);border:1px solid var(--line);color:var(--gold);font-size:40px;font-weight:800}
+  .pulse.speaking::before,.pulse.speaking::after{content:"";position:absolute;inset:0;border-radius:50%;
+    border:2px solid var(--green);animation:ring 1.4s infinite}
+  .pulse.speaking::after{animation-delay:.7s}
+  @keyframes ring{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.35);opacity:0}}
+  .statustext{margin-top:12px;font-size:13px;color:var(--muted);min-height:18px;text-align:center}
+  .timer{font-size:13px;color:var(--green);font-variant-numeric:tabular-nums}
 
-  .log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
-  .msg{max-width:82%;padding:11px 14px;border-radius:16px;font-size:14.5px;line-height:1.45}
+  .logwrap{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:6px 2px;min-height:60px}
+  .msg{max-width:80%;padding:9px 13px;border-radius:15px;font-size:14px;line-height:1.4}
   .bot{align-self:flex-start;background:var(--bub);border:1px solid var(--line);border-bottom-left-radius:5px}
   .me{align-self:flex-end;background:var(--you);border-bottom-right-radius:5px}
-  .meta{font-size:11px;color:var(--muted);margin-top:5px;opacity:.85}
-  .log:empty::before{content:"Tap Start to talk with Daven.";color:var(--muted);align-self:center;margin-top:30px}
+  .sys{align-self:center;font-size:11px;color:var(--muted)}
 
-  .chips{display:flex;flex-wrap:wrap;gap:7px;padding:10px 14px 0}
-  .chip{font-size:12px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);
-        padding:6px 11px;border-radius:999px;cursor:pointer;transition:.15s}
-  .chip:hover{color:var(--txt);border-color:var(--gold)}
+  /* ui cards */
+  .cards{padding:6px 2px;display:flex;flex-direction:column;gap:8px}
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px}
+  .card h4{margin:0 0 10px;font-size:13px;color:var(--gold)}
+  .opts{display:flex;gap:8px;flex-wrap:wrap}
+  .opt{flex:1;min-width:90px;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--panel);
+    color:var(--txt);cursor:pointer;font-size:13px}
+  .opt:hover{border-color:var(--gold)}
+  .field{display:flex;gap:8px}
+  .field input{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:10px;outline:none;font-size:14px}
+  .field input:focus{border-color:var(--gold)}
+  .pay{background:linear-gradient(145deg,#37c08a,#1f9c6a);color:#04241a;border:none;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer}
+  .idcard{background:linear-gradient(135deg,#1b2c4d,#0f1a2e);border:1px solid var(--gold);border-radius:14px;padding:14px}
+  .idcard .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .idcard .top b{color:var(--gold);font-size:13px}
+  .idcard .row{display:flex;justify-content:space-between;font-size:12px;margin:4px 0;color:var(--muted)}
+  .idcard .row span:last-child{color:var(--txt)}
 
-  .composer{padding:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
-  .row{display:flex;gap:10px;align-items:center}
-  .mic{width:60px;height:60px;border-radius:50%;border:none;cursor:pointer;flex:none;
-       background:linear-gradient(145deg,#2a3b5e,#16223a);border:1px solid var(--line);color:var(--txt);
-       font-size:22px;transition:.15s;position:relative}
-  .mic:hover{border-color:var(--gold)}
-  .mic.rec{background:linear-gradient(145deg,#ff6b6b,#c0392b);color:#fff}
-  .mic.rec::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid #ff6b6b;
-       animation:pulse 1.2s infinite}
-  @keyframes pulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.5);opacity:0}}
-  .input{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--txt);
-         border-radius:14px;padding:13px 14px;font-size:14px;outline:none}
-  .input:focus{border-color:var(--gold)}
-  .hint{text-align:center;font-size:11px;color:var(--muted)}
+  .controls{display:flex;align-items:center;justify-content:center;gap:22px;padding:14px 0 6px}
+  .micbtn{width:58px;height:58px;border-radius:50%;border:1px solid var(--line);cursor:pointer;
+    background:var(--panel2);color:var(--txt);font-size:22px}
+  .micbtn.rec{background:linear-gradient(145deg,#ff6b6b,#c0392b);color:#fff;box-shadow:0 0 0 6px rgba(255,92,92,.18)}
+  .endbtn{width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;font-size:24px;
+    background:linear-gradient(145deg,#ff5c5c,#c03232);color:#fff;box-shadow:0 8px 24px rgba(255,92,92,.35)}
+  .typein{display:flex;gap:8px;padding:0 2px 8px}
+  .typein input{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:11px;outline:none;font-size:14px}
+  .typein button{background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:12px;padding:0 14px;cursor:pointer}
 
-  .overlay{position:fixed;inset:0;background:rgba(7,12,22,.92);display:grid;place-items:center;z-index:10}
-  .overlay .card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:34px 30px;
-                 text-align:center;max-width:360px;width:90%}
-  .overlay .big{width:84px;height:84px;border-radius:50%;margin:0 auto 18px;
-       background:linear-gradient(145deg,#d9b25a,#b8923f);color:#1a1304;display:grid;place-items:center;
-       font-weight:800;font-size:30px}
-  .overlay h2{margin:0 0 8px;font-size:21px}
-  .overlay p{color:var(--muted);font-size:14px;margin:0 0 22px;line-height:1.5}
-  .start{width:100%;padding:15px;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;
-       background:linear-gradient(145deg,#37c08a,#1f9c6a);color:#04241a}
-  .start:hover{filter:brightness(1.07)}
-  .hidden{display:none!important}
+  /* ---- ended ---- */
+  #ended{align-items:center;justify-content:center;text-align:center;padding:20px}
+  .endsum{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;width:100%;max-width:360px;margin-top:14px;text-align:left}
+  .endsum h3{margin:0 0 14px;color:var(--green);text-align:center}
+  .endsum .r{display:flex;justify-content:space-between;font-size:14px;margin:8px 0}
+  .endsum .r span:first-child{color:var(--muted)}
+  .again{margin-top:20px;padding:13px 26px;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;
+    background:linear-gradient(145deg,#37c08a,#1f9c6a);color:#04241a}
 </style>
 </head>
 <body>
+<div class="app">
 
-<div class="overlay" id="overlay">
-  <div class="card">
-    <div class="big">D</div>
-    <h2 id="ovTitle">Connect with Daven</h2>
-    <p id="ovText">Your virtual receptionist at <b id="ovHotel">the hotel</b>. Tap start to connect and begin.</p>
-    <button class="start" id="startBtn">Start</button>
+  <!-- IDLE -->
+  <div class="screen show" id="idle">
+    <div class="brand" id="brand">City Resort Hotel</div>
+    <div class="sub">AI Receptionist &middot; Tap to call Daven</div>
+    <div class="avatar">D</div>
+    <button class="callbtn" id="callBtn">&#128222;</button>
+    <div class="calllabel">Tap to start a call</div>
   </div>
-</div>
 
-<div class="wrap">
-  <header>
-    <div class="logo">&#127976;</div>
-    <div>
-      <h1 id="hotelName">Hotel</h1>
-      <div class="sub">AI Receptionist &middot; powered by voice</div>
-    </div>
-    <div class="live"><span class="dot" id="liveDot"></span><span id="liveTxt">Offline</span>
-      <button class="reset" id="resetBtn" title="Start a fresh conversation">New</button>
-    </div>
-  </header>
-
-  <div class="panel">
-    <div class="agent">
-      <div class="avatar">D</div>
-      <div><b>Daven</b><br><small>Virtual Receptionist</small></div>
-    </div>
-    <div class="status" id="status"><span class="pill" id="pill">Idle</span></div>
-    <div class="log" id="log"></div>
-    <div class="chips" id="chips"></div>
-    <div class="composer">
-      <div class="row">
-        <button class="mic" id="mic" title="Tap to talk">&#127908;</button>
-        <input class="input" id="text" placeholder="Or type your question..." autocomplete="off" />
+  <!-- CALL -->
+  <div class="screen" id="call">
+    <div class="topbar">
+      <div>
+        <div class="who">Daven <span class="small">&middot; City Resort</span></div>
+        <div class="small"><span class="timer" id="timer">00:00</span> &middot; <span id="phase">connecting…</span></div>
       </div>
-      <div class="hint">Tap the mic, speak, then tap again to send. Allow microphone access when asked.</div>
+      <div class="conn" id="conn"><span class="bars"><i></i><i></i><i></i></span><span class="d"></span><span id="tick"></span></div>
+    </div>
+
+    <div class="stage">
+      <div class="pulse" id="pulse">D</div>
+      <div class="statustext" id="status">Calling…</div>
+    </div>
+
+    <div class="logwrap" id="log"></div>
+    <div class="cards" id="cards"></div>
+
+    <div class="typein">
+      <input id="type" placeholder="Type to talk (testing)…" autocomplete="off" />
+      <button id="sendType">Send</button>
+    </div>
+    <div class="controls">
+      <button class="micbtn" id="mic" title="Tap to talk">&#127908;</button>
+      <button class="endbtn" id="end" title="End call">&#128233;</button>
     </div>
   </div>
+
+  <!-- ENDED -->
+  <div class="screen" id="ended">
+    <div class="brand">Call ended</div>
+    <div class="endsum" id="endsum"></div>
+    <button class="again" id="again">&#128222; Call Again</button>
+  </div>
+
 </div>
 
 <script>
-// If you host this UI SEPARATELY from the API, set API to your Render URL, e.g.
-// const API = "https://a-receptionist.onrender.com";
-const API = ""; // same origin (this file is served by the app itself)
+const API = ""; // served by the app itself. For a separate UI, set your Render URL.
 const $ = id => document.getElementById(id);
 
-// Persistent session id so a multi-turn booking remembers itself across turns.
-let sessionId = localStorage.getItem("daven_session");
-if (!sessionId) {
-  sessionId = "web-" + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + Math.random());
-  localStorage.setItem("daven_session", sessionId);
-}
-const jsonHeaders = () => ({ "Content-Type": "application/json", "X-Session-Id": sessionId });
+let sessionId = localStorage.getItem("daven_call") ||
+  "call-" + (crypto.randomUUID ? crypto.randomUUID() : Date.now()+Math.random());
+localStorage.setItem("daven_call", sessionId);
+const H = () => ({ "Content-Type": "application/json", "X-Session-Id": sessionId });
 
-let connected = false;
-let mediaRec = null, chunks = [], audioEls = [];
-let lastStatus = null;
+let callState = "idle";            // idle | ringing | active | ended
+let mediaRec=null, chunks=[];
+let hbInt=null, callTs=0, timerInt=null, silenceT=null, ringT=null, audioCtx=null;
+let callMeta = {name:null,title:null,room:null,ref:null};
 
-// Warm "I'm waiting for you" lines shown after each message ends.
-const WARM = [
-  "I'm here whenever you're ready 🙂",
-  "Your turn — go ahead, I'm listening",
-  "Take your time, I'm all ears",
-  "Whenever you're ready, just tap the mic",
-  "I'm listening 🙂",
-];
-const warmLine = () => WARM[Math.floor(Math.random() * WARM.length)];
-
-function setLive(on){ $("liveDot").style.background = on ? "#37c08a":"#9fb0c7"; $("liveTxt").textContent = on ? "Live":"Offline"; }
-function setStatus(state, label){
-  const s = $("status"); s.className = "status" + (state ? " "+state : "");
-  $("pill").textContent = label || "Idle";
-}
-function idleStatus(){
-  // warm ending shown after Daven finishes speaking / waiting for the user's reply
-  if (lastStatus === "booking") return setStatus("warm", "Booking in progress — " + warmLine());
-  if (lastStatus === "book_confirmed") return setStatus("warm", "All booked! " + warmLine());
-  return setStatus("warm", warmLine());
+function show(id){ ["idle","call","ended"].forEach(s=>$(s).classList.toggle("show", s===id)); }
+function setPhase(t){ $("phase").textContent = t; }
+function setStatus(t){ $("status").textContent = t; }
+function setSpeaking(on){ $("pulse").classList.toggle("speaking", on); }
+function setConn(on, tick){
+  const c=$("conn"); c.classList.toggle("off", !on);
+  $("tick").textContent = on && tick ? "#"+tick : (on?"":"reconnect");
 }
 
-function playAudio(b64, onDone){
-  if(!b64){ idleStatus(); if(onDone) onDone(); return; }
-  const a = new Audio("data:audio/mpeg;base64," + b64);
-  audioEls.push(a);
-  setStatus("speaking", "Daven is speaking...");
-  a.onended = ()=>{ idleStatus(); if(onDone) onDone(); };
-  a.onerror = ()=>{ idleStatus(); if(onDone) onDone(); };
-  a.play().catch(()=>{ idleStatus(); if(onDone) onDone(); });
-}
-function stopOtherAudio(){ audioEls.forEach(a=>{try{a.pause()}catch(e){}}); audioEls=[]; }
-
-function addMsg(who, text, meta){
-  const log = $("log");
-  const div = document.createElement("div");
-  div.className = "msg " + who;
-  div.textContent = text;
-  if(meta){ const m = document.createElement("div"); m.className="meta"; m.textContent=meta; div.appendChild(m); }
-  log.appendChild(div); log.scrollTop = log.scrollHeight;
-  return div;
-}
-
-function handleReply(data, showUserText){
-  lastStatus = data.status || null;
-  if(showUserText && data.transcript) addMsg("me", data.transcript);
-  else if(showUserText) addMsg("me", "(nothing heard)");
-  let meta = data.status ? "("+data.status+")" : "";
-  if (data.status === "book_confirmed") meta = "✓ Booking confirmed";
-  const bot = addMsg("bot", data.reply || "...", meta);
-  if (bot && data.status === "book_confirmed") bot.style.borderColor = "#37c08a";
-  playAudio(data.audio);
-}
-
-/* ---- connect + greeting ---- */
-async function connect(){
+/* ---- ringback tone (WebAudio) ---- */
+function ringStart(){
   try{
-    setLive(false); setStatus("", "Connecting...");
-    const r = await fetch(API + "/api/health"); const h = await r.json();
-    $("hotelName").textContent = h.hotel || "Hotel"; $("ovHotel").textContent = h.hotel || "the hotel";
-    const g = await fetch(API + "/api/greeting", { headers: { "X-Session-Id": sessionId } }).then(r=>r.json());
-    if (g.session_id) { sessionId = g.session_id; localStorage.setItem("daven_session", sessionId); }
-    connected = true; setLive(true);
-    $("overlay").classList.add("hidden");
-    addMsg("bot", g.text);
-    playAudio(g.audio);
-  }catch(e){
-    setStatus("", "Connection failed");
-    $("ovTitle").textContent = "Connection failed";
-    $("ovText").innerHTML = "Could not reach the server. Check it is running, then tap start again.<br><small>"+e+"</small>";
-    console.error(e);
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    const beep=()=>{
+      const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+      o.type="sine"; o.frequency.value=440; o.connect(g); g.connect(audioCtx.destination);
+      const t=audioCtx.currentTime;
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.12,t+0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
+      o.start(t); o.stop(t+0.55);
+    };
+    beep(); ringT=setInterval(beep,2000);
+  }catch(e){}
+}
+function ringStop(){ if(ringT){clearInterval(ringT);ringT=null;} }
+
+/* ---- timer ---- */
+function startTimer(){ callTs=Date.now();
+  timerInt=setInterval(()=>{ const s=Math.floor((Date.now()-callTs)/1000);
+    $("timer").textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0"); },1000); }
+function stopTimers(){ if(timerInt)clearInterval(timerInt); if(hbInt)clearInterval(hbInt); }
+
+/* ---- silence / disconnect ---- */
+function armSilence(){ clearSilence();
+  silenceT=setTimeout(async()=>{ if(callState!=="active")return;
+    const r=await post("/api/call/silence",{}); handle(r,true); }, 12000); }
+function clearSilence(){ if(silenceT){clearTimeout(silenceT);silenceT=null;} }
+["mic","type"].forEach(id=>{ const el=$(id); if(el) el.addEventListener("focusin",clearSilence); });
+
+/* ---- heartbeat / connection tick ---- */
+function startHeartbeat(){
+  hbInt=setInterval(async()=>{
+    try{ const r=await post("/api/call/heartbeat",{}); setConn(true, r.tick);
+      if(r.call_status==="ended"){ endCallScreen(); }
+    }catch(e){ setConn(false); }
+  },5000);
+}
+
+/* ---- messages + audio ---- */
+function addMsg(who,text){ const l=$("log"),d=document.createElement("div");
+  d.className="msg "+who; d.textContent=text; l.appendChild(d); l.scrollTop=l.scrollHeight; }
+function playAudio(b64,done){
+  if(!b64){ if(done)done(); return; }
+  setSpeaking(true); setStatus("Daven is speaking…");
+  const a=new Audio("data:audio/mpeg;base64,"+b64);
+  a.onended=()=>{ setSpeaking(false); if(callState==="active"){ setStatus("Your turn — listening…"); armSilence(); } if(done)done(); };
+  a.onerror=()=>{ setSpeaking(false); if(done)done(); };
+  a.play().catch(()=>{ setSpeaking(false); if(done)done(); });
+}
+
+/* ---- UI trigger cards ---- */
+function renderUI(ui){
+  const box=$("cards"); 
+  if(!ui){ return; }
+  if(ui.type==="payment_options"){
+    box.innerHTML="";
+    const c=document.createElement("div"); c.className="card";
+    c.innerHTML=`<h4>Choose a payment method</h4><div class="opts"></div>`;
+    const o=c.querySelector(".opts");
+    ui.options.forEach(opt=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=opt;
+      b.onclick=()=>{ clearSilence(); sendUI("select_payment",opt); }; o.appendChild(b); });
+    box.appendChild(c);
+  } else if(ui.type==="payment_form"){
+    box.innerHTML="";
+    const c=document.createElement("div"); c.className="card";
+    c.innerHTML=`<h4>${ui.method} payment (demo — type any number)</h4>
+      <div class="field"><input inputmode="numeric" placeholder="0000 0000 0000 0000" />
+      <button class="pay">Pay</button></div>`;
+    const inp=c.querySelector("input"), btn=c.querySelector(".pay");
+    const pay=()=>{ const v=inp.value.trim(); if(!v){inp.focus();return;} clearSilence(); sendUI("submit_payment",v); };
+    btn.onclick=pay; inp.onkeydown=e=>{if(e.key==="Enter")pay();}; inp.focus();
+    box.appendChild(c);
+  } else if(ui.type==="id_card"){
+    box.innerHTML="";
+    const c=document.createElement("div"); c.className="idcard";
+    c.innerHTML=`<div class="top"><b>${ui.hotel||""}</b><span style="font-size:11px;color:var(--muted)">GUEST ID</span></div>
+      <div class="row"><span>Name</span><span>${ui.title?ui.title+" ":""}${ui.name||""}</span></div>
+      <div class="row"><span>Room</span><span>${ui.room||""}</span></div>
+      <div class="row"><span>Ref</span><span>${ui.ref||""}</span></div>`;
+    box.appendChild(c);
   }
 }
-$("startBtn").addEventListener("click", connect);
+function clearCards(){ $("cards").innerHTML=""; }
+
+/* ---- API helpers ---- */
+async function post(path,obj){ return fetch(API+path,{method:"POST",headers:H(),body:JSON.stringify(obj||{})}).then(r=>r.json()); }
+
+function handle(r,isSilence){
+  if(r.name)callMeta.name=r.name; if(r.title)callMeta.title=r.title;
+  if(r.room)callMeta.room=r.room; if(r.ref)callMeta.ref=r.ref;
+  if(isSilence){ if(r.reply)addMsg("bot",r.reply); }
+  else { if(r.transcript)addMsg("me",r.transcript); if(r.reply)addMsg("bot",r.reply); }
+  if(r.ui) renderUI(r.ui);
+  if(r.call_status==="ended"){ playAudio(r.audio,()=>endCallScreen()); return; }
+  playAudio(r.audio);
+}
+async function sendUI(action,value){ const r=await post("/api/call/ui",{action,value}); handle(r,false); }
+async function sendText(t){ clearSilence(); setStatus("Thinking…"); const r=await post("/api/call/say",{text:t}); handle(r,false); }
 
 /* ---- voice ---- */
 async function startRec(){
   try{
-    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-    mediaRec = new MediaRecorder(stream);
-    chunks = [];
-    mediaRec.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
-    mediaRec.onstop = async () => {
-      stream.getTracks().forEach(t=>t.stop());
-      const blob = new Blob(chunks, {type:"audio/webm"}); chunks=[];
-      await sendVoice(blob);
-    };
-    mediaRec.start();
-    stopOtherAudio();
-    setStatus("listening","Listening... tap again to send");
-  }catch(e){ alert("Microphone access is needed for voice. You can still type below."); console.error(e); }
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    mediaRec=new MediaRecorder(stream); chunks=[];
+    mediaRec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+    mediaRec.onstop=async()=>{ stream.getTracks().forEach(t=>t.stop());
+      const blob=new Blob(chunks,{type:"audio/webm"}); chunks=[];
+      setStatus("Thinking…"); const fd=new FormData(); fd.append("audio",blob,"speech.webm"); fd.append("session",sessionId);
+      try{ const r=await fetch(API+"/api/call/say",{method:"POST",headers:{"X-Session-Id":sessionId},body:fd}).then(r=>r.json()); handle(r,false); }
+      catch(e){ addMsg("sys","(couldn't reach the server)"); setStatus("Your turn — listening…"); armSilence(); } };
+    mediaRec.start(); clearSilence(); setStatus("Listening… tap again to send");
+  }catch(e){ alert("Microphone access is needed for voice. You can type below instead."); }
 }
-function stopRec(){ if(mediaRec && mediaRec.state !== "inactive") mediaRec.stop(); }
+function stopRec(){ if(mediaRec&&mediaRec.state!=="inactive")mediaRec.stop(); }
+let rec=false;
+$("mic").addEventListener("click",()=>{ if(callState!=="active")return;
+  rec=!rec; $("mic").classList.toggle("rec",rec); $("mic").innerHTML=rec?"&#9209;":"&#127908;";
+  if(rec)startRec(); else stopRec(); });
 
-async function sendVoice(blob){
-  setStatus("thinking","Thinking...");
-  const fd = new FormData(); fd.append("audio", blob, "speech.webm"); fd.append("session", sessionId);
+/* ---- start / end ---- */
+async function startCall(){
+  show("call"); callState="ringing"; setConn(false); clearCards(); $("log").innerHTML="";
+  setStatus("Calling…"); setPhase("connecting…"); ringStart();
+  // wait for Render to wake (cold start)
+  let up=false;
+  for(let i=0;i<60;i++){ try{ const r=await fetch(API+"/api/health"); if(r.ok){up=true;break;} }catch(e){} await new Promise(r=>setTimeout(r,1500)); }
+  if(!up){ ringStop(); setStatus("Couldn't connect. Please try again."); return; }
+  // begin the call
   try{
-    const data = await fetch(API+"/api/chat",{method:"POST",headers:{"X-Session-Id":sessionId},body:fd}).then(r=>r.json());
-    handleReply(data, true);
-  }catch(e){ idleStatus(); addMsg("bot","Sorry, I had trouble understanding that. Could you try again?"); }
+    const r=await post("/api/call/start",{});
+    ringStop(); callState="active"; setPhase("connected"); setConn(true);
+    startTimer(); startHeartbeat();
+    addMsg("bot",r.reply);
+    if(r.call_status==="ended"){ playAudio(r.audio,()=>endCallScreen()); return; }
+    playAudio(r.audio);
+  }catch(e){ ringStop(); setStatus("Call failed. Try again."); }
 }
 
-let recording=false;
-$("mic").addEventListener("click", ()=>{
-  if(!connected){ alert("Tap Start first."); return; }
-  recording = !recording;
-  $("mic").classList.toggle("rec", recording);
-  $("mic").innerHTML = recording ? "&#9209;" : "&#127908;";
-  if(recording) startRec(); else { stopRec(); }
-});
-
-/* ---- text fallback ---- */
-async function sendText(){
-  const t = $("text").value.trim(); if(!t) return;
-  $("text").value="";
-  setStatus("thinking","Thinking...");
-  try{
-    const data = await fetch(API+"/api/text",{
-      method:"POST",headers:jsonHeaders(),
-      body:JSON.stringify({text:t, session:sessionId})
-    }).then(r=>r.json());
-    handleReply(data, false);
-    addMsg("me", t);
-  }catch(e){ idleStatus(); addMsg("bot","Sorry, something went wrong. Try again."); }
+function endCallScreen(){
+  callState="ended"; stopTimers(); ringStop(); clearSilence(); setSpeaking(false);
+  const s=$("endsum");
+  s.innerHTML=`<h3>Call Summary</h3>`+
+    row("Guest", (callMeta.title?callMeta.title+" ":"")+(callMeta.name||"—"))+
+    row("Room", callMeta.room||"—")+
+    row("Reference", callMeta.ref||"—");
+  show("ended");
 }
-$("text").addEventListener("keydown", e=>{ if(e.key==="Enter") sendText(); });
+function row(k,v){ return `<div class="r"><span>${k}</span><span>${v}</span></div>`; }
 
-/* ---- new chat ---- */
-async function newChat(){
-  if(!connected) return;
-  try{ await fetch(API+"/api/reset",{method:"POST",headers:{"X-Session-Id":sessionId}}); }catch(e){}
-  $("log").innerHTML = ""; lastStatus = null; setStatus("warm", "Starting a fresh chat...");
-  const g = await fetch(API+"/api/greeting",{headers:{"X-Session-Id":sessionId}}).then(r=>r.json());
-  addMsg("bot", g.text); playAudio(g.audio);
-}
-$("resetBtn").addEventListener("click", newChat);
-
-/* ---- suggestion chips ---- */
-async function loadChips(){
-  try{
-    const t = await fetch(API+"/api/topics").then(r=>r.json());
-    const box=$("chips"); (t.topics||[]).slice(0,8).forEach(label=>{
-      const c=document.createElement("div"); c.className="chip"; c.textContent=label;
-      c.onclick=()=>{ $("text").value = label; $("text").focus(); };
-      box.appendChild(c);
-    });
-  }catch(e){}
-}
-loadChips();
+$("callBtn").addEventListener("click", startCall);
+$("again").addEventListener("click", ()=>{ rec=false; $("mic").classList.remove("rec"); $("mic").innerHTML="&#127908;"; show("idle"); });
+$("end").addEventListener("click", async()=>{ clearSilence();
+  try{ await post("/api/call/end",{}); }catch(e){} endCallScreen(); });
+$("sendType").addEventListener("click", ()=>{ const t=$("type").value.trim(); if(!t)return; $("type").value=""; sendText(t); });
+$("type").addEventListener("keydown", e=>{ if(e.key==="Enter"){ const t=$("type").value.trim(); if(!t)return; $("type").value=""; sendText(t);} });
 </script>
 </body>
 </html>
