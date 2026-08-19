@@ -2,329 +2,214 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Daven &middot; City Resort Hotel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<title>Daven · City Resort Hotel</title>
 <style>
   :root{
-    --bg:#070d18; --panel:#0f1a2e; --panel2:#16243d; --line:#243349;
-    --gold:#d9b25a; --green:#37c08a; --red:#ff5c5c; --txt:#e8eef7; --muted:#9fb0c7;
-    --you:#1f6feb; --bub:#1a2740;
+    --bg:#070b16; --glow:#1b2c63; --panel:rgba(20,30,52,.72); --panel2:rgba(30,43,71,.6);
+    --line:rgba(255,255,255,.08); --gold:#e3b765; --green:#3ddc97; --red:#ff5d6c;
+    --txt:#eaf1ff; --muted:#9aa8c4; --you:#3b82f6; --bub:rgba(255,255,255,.05);
   }
-  *{box-sizing:border-box}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
-    background:radial-gradient(900px 500px at 50% -10%,#15264a 0,var(--bg) 60%);
-    color:var(--txt);min-height:100vh;display:flex;flex-direction:column;align-items:center}
-  .app{width:100%;max-width:480px;height:100vh;display:flex;flex-direction:column;padding:14px}
+    background:radial-gradient(1100px 620px at 50% -12%,var(--glow) 0,var(--bg) 58%);
+    color:var(--txt);min-height:100vh;display:flex;justify-content:center}
+  .app{width:100%;max-width:460px;height:100dvh;display:flex;flex-direction:column;padding:14px;position:relative}
   .screen{display:none;flex:1;flex-direction:column}.screen.show{display:flex}
 
-  /* ---- idle ---- */
+  /* idle */
   #idle{align-items:center;justify-content:center;text-align:center}
-  .brand{font-size:20px;font-weight:700;margin-bottom:4px}
-  .sub{color:var(--muted);font-size:13px;margin-bottom:34px}
-  .avatar{width:118px;height:118px;border-radius:50%;margin:0 auto 22px;
-    background:linear-gradient(145deg,#d9b25a,#b8923f);color:#1a1304;display:grid;place-items:center;
-    font-weight:800;font-size:46px;box-shadow:0 12px 40px rgba(217,178,90,.25)}
-  .callbtn{width:74px;height:74px;border-radius:50%;border:none;cursor:pointer;margin:6px auto;
-    background:linear-gradient(145deg,#37c08a,#1f9c6a);color:#04241a;font-size:30px;
-    box-shadow:0 10px 30px rgba(55,192,138,.4);transition:.15s}
-  .callbtn:hover{transform:translateY(-2px)}
-  .calllabel{margin-top:10px;color:var(--muted);font-size:13px}
+  .badge{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);
+    border:1px solid rgba(227,183,101,.3);padding:5px 12px;border-radius:999px;margin-bottom:22px}
+  .av{width:128px;height:128px;border-radius:50%;display:grid;place-items:center;font-size:50px;font-weight:800;
+    color:#1a1304;background:radial-gradient(circle at 30% 25%,#f0cd86,#c9952f);
+    box-shadow:0 18px 50px rgba(227,183,101,.28);margin-bottom:20px}
+  .hotel{font-size:22px;font-weight:700;letter-spacing:.2px}
+  .who{color:var(--muted);font-size:13px;margin-top:3px;margin-bottom:34px}
+  .callbtn{width:78px;height:78px;border-radius:50%;border:none;cursor:pointer;font-size:32px;color:#04231a;
+    background:linear-gradient(145deg,#4be0a3,#16a674);box-shadow:0 14px 38px rgba(61,220,151,.42);
+    transition:transform .15s}.callbtn:active{transform:scale(.94)}
+  .tap{margin-top:14px;color:var(--muted);font-size:13px}
 
-  /* ---- call ---- */
-  .topbar{display:flex;align-items:center;gap:8px;padding:6px 4px 10px}
-  .topbar .who{font-size:15px;font-weight:600}
-  .topbar .small{color:var(--muted);font-size:11px}
-  .conn{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
-  .conn .d{width:8px;height:8px;border-radius:50%;background:var(--green)}
-  .conn.off .d{background:var(--red)}
-  .conn .bars{display:flex;gap:2px;align-items:flex-end;height:12px}
-  .conn .bars i{width:3px;background:var(--green);border-radius:1px;animation:eq .9s infinite ease-in-out}
-  .conn .bars i:nth-child(2){animation-delay:.2s}.conn .bars i:nth-child(3){animation-delay:.4s}
-  .conn.off .bars i{background:var(--red)}
-  @keyframes eq{0%,100%{height:3px}50%{height:12px}}
+  /* call */
+  .top{display:flex;align-items:center;gap:10px;padding:4px 2px 8px}
+  .top .nm{font-size:15px;font-weight:600}.top .sm{color:var(--muted);font-size:11px}
+  .conn{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted)}
+  .bars{display:flex;gap:2px;align-items:flex-end;height:13px}
+  .bars i{width:3px;height:4px;background:var(--green);border-radius:2px;animation:eq 1s infinite ease-in-out}
+  .bars i:nth-child(2){animation-delay:.18s}.bars i:nth-child(3){animation-delay:.36s}.bars i:nth-child(4){animation-delay:.54s}
+  .conn.bad .bars i{background:var(--red);animation:none;height:4px}
+  .conn .d{width:8px;height:8px;border-radius:50%;background:var(--green)}.conn.bad .d{background:var(--red)}
+  @keyframes eq{0%,100%{height:4px}50%{height:13px}}
 
-  .stage{display:flex;flex-direction:column;align-items:center;padding:8px 0 12px}
-  .pulse{width:104px;height:104px;border-radius:50%;position:relative;display:grid;place-items:center;
-    background:linear-gradient(145deg,#2a3b5e,#16223a);border:1px solid var(--line);color:var(--gold);font-size:40px;font-weight:800}
-  .pulse.speaking::before,.pulse.speaking::after{content:"";position:absolute;inset:0;border-radius:50%;
-    border:2px solid var(--green);animation:ring 1.4s infinite}
-  .pulse.speaking::after{animation-delay:.7s}
-  @keyframes ring{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.35);opacity:0}}
-  .statustext{margin-top:12px;font-size:13px;color:var(--muted);min-height:18px;text-align:center}
-  .timer{font-size:13px;color:var(--green);font-variant-numeric:tabular-nums}
+  .stage{display:flex;flex-direction:column;align-items:center;padding:6px 0 10px}
+  .ring{position:relative;width:112px;height:112px;display:grid;place-items:center;margin-bottom:6px}
+  .ring .core{width:96px;height:96px;border-radius:50%;display:grid;place-items:center;font-size:38px;font-weight:800;
+    color:var(--gold);background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(6px)}
+  .ring.spk .core{color:var(--green);border-color:rgba(61,220,151,.4)}
+  .ring.spk::before,.ring.spk::after{content:"";position:absolute;width:112px;height:112px;border-radius:50%;
+    border:2px solid rgba(61,220,151,.5);animation:halo 1.5s infinite}
+  .ring.spk::after{animation-delay:.75s}
+  @keyframes halo{0%{transform:scale(.85);opacity:.7}100%{transform:scale(1.3);opacity:0}}
+  .status{font-size:13px;color:var(--muted);min-height:18px;text-align:center}
+  .status .t{color:var(--green);font-variant-numeric:tabular-nums}
 
-  .logwrap{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:6px 2px;min-height:60px}
-  .msg{max-width:80%;padding:9px 13px;border-radius:15px;font-size:14px;line-height:1.4}
+  .log{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:8px 2px;min-height:40px}
+  .msg{max-width:82%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.45;animation:pop .2s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
   .bot{align-self:flex-start;background:var(--bub);border:1px solid var(--line);border-bottom-left-radius:5px}
   .me{align-self:flex-end;background:var(--you);border-bottom-right-radius:5px}
-  .sys{align-self:center;font-size:11px;color:var(--muted)}
 
-  /* ui cards */
-  .cards{padding:6px 2px;display:flex;flex-direction:column;gap:8px}
-  .card{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px}
-  .card h4{margin:0 0 10px;font-size:13px;color:var(--gold)}
-  .opts{display:flex;gap:8px;flex-wrap:wrap}
-  .opt{flex:1;min-width:90px;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--panel);
-    color:var(--txt);cursor:pointer;font-size:13px}
-  .opt:hover{border-color:var(--gold)}
-  .field{display:flex;gap:8px}
-  .field input{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:10px;outline:none;font-size:14px}
-  .field input:focus{border-color:var(--gold)}
-  .pay{background:linear-gradient(145deg,#37c08a,#1f9c6a);color:#04241a;border:none;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer}
-  .idcard{background:linear-gradient(135deg,#1b2c4d,#0f1a2e);border:1px solid var(--gold);border-radius:14px;padding:14px}
-  .idcard .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-  .idcard .top b{color:var(--gold);font-size:13px}
-  .idcard .row{display:flex;justify-content:space-between;font-size:12px;margin:4px 0;color:var(--muted)}
-  .idcard .row span:last-child{color:var(--txt)}
+  .compose{padding-top:6px}
+  .typein{display:flex;gap:8px;margin-bottom:10px}
+  .typein input{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--txt);
+    border-radius:14px;padding:12px 14px;font-size:14px;outline:none}
+  .typein input:focus{border-color:rgba(227,183,101,.5)}
+  .typein button{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:14px;padding:0 16px;cursor:pointer;font-size:13px}
+  .ctrls{display:flex;align-items:center;justify-content:center;gap:26px;padding:6px 0 4px}
+  .mic{width:60px;height:60px;border-radius:50%;border:1px solid var(--line);cursor:pointer;font-size:22px;
+    color:var(--txt);background:var(--panel2);backdrop-filter:blur(6px)}
+  .mic.rec{background:linear-gradient(145deg,#ff7a85,#d63648);color:#fff;box-shadow:0 0 0 7px rgba(255,93,108,.18)}
+  .end{width:66px;height:66px;border-radius:50%;border:none;cursor:pointer;font-size:25px;color:#fff;
+    background:linear-gradient(145deg,#ff5d6c,#cf3040);box-shadow:0 10px 26px rgba(255,93,108,.4)}
 
-  .controls{display:flex;align-items:center;justify-content:center;gap:22px;padding:14px 0 6px}
-  .micbtn{width:58px;height:58px;border-radius:50%;border:1px solid var(--line);cursor:pointer;
-    background:var(--panel2);color:var(--txt);font-size:22px}
-  .micbtn.rec{background:linear-gradient(145deg,#ff6b6b,#c0392b);color:#fff;box-shadow:0 0 0 6px rgba(255,92,92,.18)}
-  .endbtn{width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;font-size:24px;
-    background:linear-gradient(145deg,#ff5c5c,#c03232);color:#fff;box-shadow:0 8px 24px rgba(255,92,92,.35)}
-  .typein{display:flex;gap:8px;padding:0 2px 8px}
-  .typein input{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:11px;outline:none;font-size:14px}
-  .typein button{background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:12px;padding:0 14px;cursor:pointer}
-
-  /* ---- ended ---- */
-  #ended{align-items:center;justify-content:center;text-align:center;padding:20px}
-  .endsum{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;width:100%;max-width:360px;margin-top:14px;text-align:left}
-  .endsum h3{margin:0 0 14px;color:var(--green);text-align:center}
-  .endsum .r{display:flex;justify-content:space-between;font-size:14px;margin:8px 0}
-  .endsum .r span:first-child{color:var(--muted)}
-  .again{margin-top:20px;padding:13px 26px;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;
-    background:linear-gradient(145deg,#37c08a,#1f9c6a);color:#04241a}
+  /* ended */
+  #ended{align-items:center;justify-content:center;text-align:center}
+  .endcard{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:26px;width:100%;max-width:340px;backdrop-filter:blur(8px)}
+  .endcard h3{margin:0 0 6px;font-size:18px}.endcard p{margin:0 0 18px;color:var(--muted);font-size:13px}
+  .again{padding:14px 30px;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;color:#04231a;
+    background:linear-gradient(145deg,#4be0a3,#16a674)}
+  .fade{opacity:.55}
 </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- IDLE -->
   <div class="screen show" id="idle">
-    <div class="brand" id="brand">City Resort Hotel</div>
-    <div class="sub">AI Receptionist &middot; Tap to call Daven</div>
-    <div class="avatar">D</div>
+    <div class="badge">AI Voice Receptionist</div>
+    <div class="av">D</div>
+    <div class="hotel">City Resort Hotel</div>
+    <div class="who">Talk to Daven — bookings, prices & more</div>
     <button class="callbtn" id="callBtn">&#128222;</button>
-    <div class="calllabel">Tap to start a call</div>
+    <div class="tap">Tap to start a call</div>
   </div>
 
-  <!-- CALL -->
   <div class="screen" id="call">
-    <div class="topbar">
-      <div>
-        <div class="who">Daven <span class="small">&middot; City Resort</span></div>
-        <div class="small"><span class="timer" id="timer">00:00</span> &middot; <span id="phase">connecting…</span></div>
-      </div>
-      <div class="conn" id="conn"><span class="bars"><i></i><i></i><i></i></span><span class="d"></span><span id="tick"></span></div>
+    <div class="top">
+      <div><div class="nm">Daven</div><div class="sm"><span class="t" id="timer">00:00</span> · <span id="phase">connecting…</span></div></div>
+      <div class="conn" id="conn"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="d"></span></div>
     </div>
-
     <div class="stage">
-      <div class="pulse" id="pulse">D</div>
-      <div class="statustext" id="status">Calling…</div>
+      <div class="ring" id="ring"><div class="core">D</div></div>
+      <div class="status" id="status">Calling…</div>
     </div>
-
-    <div class="logwrap" id="log"></div>
-    <div class="cards" id="cards"></div>
-
-    <div class="typein">
-      <input id="type" placeholder="Type to talk (testing)…" autocomplete="off" />
-      <button id="sendType">Send</button>
-    </div>
-    <div class="controls">
-      <button class="micbtn" id="mic" title="Tap to talk">&#127908;</button>
-      <button class="endbtn" id="end" title="End call">&#128233;</button>
+    <div class="log" id="log"></div>
+    <div class="compose">
+      <div class="typein"><input id="type" placeholder="Type to talk (testing)…" autocomplete="off" /><button id="sendType">Send</button></div>
+      <div class="ctrls">
+        <button class="mic" id="mic" title="Tap to talk">&#127908;</button>
+        <button class="end" id="end" title="End call">&#128233;</button>
+      </div>
     </div>
   </div>
 
-  <!-- ENDED -->
   <div class="screen" id="ended">
-    <div class="brand">Call ended</div>
-    <div class="endsum" id="endsum"></div>
-    <button class="again" id="again">&#128222; Call Again</button>
+    <div class="endcard">
+      <h3 id="endTitle">Call ended</h3>
+      <p id="endMsg">Thanks for calling City Resort Hotel. We hope to see you soon.</p>
+      <button class="again" id="again">&#128222; Call Again</button>
+    </div>
   </div>
 
 </div>
 
 <script>
-const API = ""; // served by the app itself. For a separate UI, set your Render URL.
+const API = ""; // served by the app. For a separate UI, set your Render URL.
 const $ = id => document.getElementById(id);
+let sid = localStorage.getItem("daven_call") || "call-"+(crypto.randomUUID?crypto.randomUUID():Date.now()+""+Math.random());
+localStorage.setItem("daven_call", sid);
+const H = extra => Object.assign({"Content-Type":"application/json","X-Session-Id":sid}, extra||{});
 
-let sessionId = localStorage.getItem("daven_call") ||
-  "call-" + (crypto.randomUUID ? crypto.randomUUID() : Date.now()+Math.random());
-localStorage.setItem("daven_call", sessionId);
-const H = () => ({ "Content-Type": "application/json", "X-Session-Id": sessionId });
+let state="idle", mediaRec=null, chunks=[], hbInt=null, ts0=0, timerInt=null, silenceT=null, ringT=null, actx=null;
 
-let callState = "idle";            // idle | ringing | active | ended
-let mediaRec=null, chunks=[];
-let hbInt=null, callTs=0, timerInt=null, silenceT=null, ringT=null, audioCtx=null;
-let callMeta = {name:null,title:null,room:null,ref:null};
+const show = id => ["idle","call","ended"].forEach(s=>$(s).classList.toggle("show", s===id));
+const setPhase = t => $("phase").textContent=t;
+const setStatus = t => $("status").textContent=t;
+const setSpk = on => $("ring").classList.toggle("spk", on);
+const setConn = on => $("conn").classList.toggle("bad", !on);
 
-function show(id){ ["idle","call","ended"].forEach(s=>$(s).classList.toggle("show", s===id)); }
-function setPhase(t){ $("phase").textContent = t; }
-function setStatus(t){ $("status").textContent = t; }
-function setSpeaking(on){ $("pulse").classList.toggle("speaking", on); }
-function setConn(on, tick){
-  const c=$("conn"); c.classList.toggle("off", !on);
-  $("tick").textContent = on && tick ? "#"+tick : (on?"":"reconnect");
-}
-
-/* ---- ringback tone (WebAudio) ---- */
-function ringStart(){
-  try{
-    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
-    const beep=()=>{
-      const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-      o.type="sine"; o.frequency.value=440; o.connect(g); g.connect(audioCtx.destination);
-      const t=audioCtx.currentTime;
-      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.12,t+0.05);
-      g.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
-      o.start(t); o.stop(t+0.55);
-    };
-    beep(); ringT=setInterval(beep,2000);
-  }catch(e){}
-}
+function ringStart(){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+  const beep=()=>{ const o=actx.createOscillator(),g=actx.createGain(); o.type="sine";o.frequency.value=440;
+    o.connect(g);g.connect(actx.destination); const t=actx.currentTime;
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.12,t+.05);g.gain.exponentialRampToValueAtTime(.0001,t+.5);
+    o.start(t);o.stop(t+.55); };
+  beep(); ringT=setInterval(beep,2000); }catch(e){} }
 function ringStop(){ if(ringT){clearInterval(ringT);ringT=null;} }
 
-/* ---- timer ---- */
-function startTimer(){ callTs=Date.now();
-  timerInt=setInterval(()=>{ const s=Math.floor((Date.now()-callTs)/1000);
-    $("timer").textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0"); },1000); }
+function startTimer(){ ts0=Date.now(); timerInt=setInterval(()=>{ const s=Math.floor((Date.now()-ts0)/1000);
+  $("timer").textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0"); },1000); }
 function stopTimers(){ if(timerInt)clearInterval(timerInt); if(hbInt)clearInterval(hbInt); }
 
-/* ---- silence / disconnect ---- */
-function armSilence(){ clearSilence();
-  silenceT=setTimeout(async()=>{ if(callState!=="active")return;
-    const r=await post("/api/call/silence",{}); handle(r,true); }, 12000); }
+function armSilence(){ clearSilence(); silenceT=setTimeout(async()=>{ if(state!=="active")return;
+  const r=await post("/api/call/silence"); handle(r,true); }, 12000); }
 function clearSilence(){ if(silenceT){clearTimeout(silenceT);silenceT=null;} }
-["mic","type"].forEach(id=>{ const el=$(id); if(el) el.addEventListener("focusin",clearSilence); });
 
-/* ---- heartbeat / connection tick ---- */
-function startHeartbeat(){
-  hbInt=setInterval(async()=>{
-    try{ const r=await post("/api/call/heartbeat",{}); setConn(true, r.tick);
-      if(r.call_status==="ended"){ endCallScreen(); }
-    }catch(e){ setConn(false); }
-  },5000);
+function startHB(){ hbInt=setInterval(async()=>{ try{ const r=await post("/api/call/heartbeat");
+  setConn(true); if(r.call_status==="ended") endScreen("Call ended","Looks like the call was disconnected.");
+  }catch(e){ setConn(false); } },5000); }
+
+function addMsg(who,text){ const l=$("log"),d=document.createElement("div"); d.className="msg "+who; d.textContent=text;
+  l.appendChild(d); l.scrollTop=l.scrollHeight; }
+function play(b64,type,done){ if(!b64){ if(done)done(); return; }
+  setSpk(true); setStatus("Daven is speaking…");
+  const a=new Audio(`data:${type||"audio/mpeg"};base64,${b64}`);
+  a.onended=()=>{ setSpk(false); if(state==="active"){ setStatus("Your turn — I’m listening…"); armSilence(); } if(done)done(); };
+  a.onerror=()=>{ setSpk(false); if(done)done(); };
+  a.play().catch(()=>{ setSpk(false); if(done)done(); });
 }
-
-/* ---- messages + audio ---- */
-function addMsg(who,text){ const l=$("log"),d=document.createElement("div");
-  d.className="msg "+who; d.textContent=text; l.appendChild(d); l.scrollTop=l.scrollHeight; }
-function playAudio(b64,done){
-  if(!b64){ if(done)done(); return; }
-  setSpeaking(true); setStatus("Daven is speaking…");
-  const a=new Audio("data:audio/mpeg;base64,"+b64);
-  a.onended=()=>{ setSpeaking(false); if(callState==="active"){ setStatus("Your turn — listening…"); armSilence(); } if(done)done(); };
-  a.onerror=()=>{ setSpeaking(false); if(done)done(); };
-  a.play().catch(()=>{ setSpeaking(false); if(done)done(); });
-}
-
-/* ---- UI trigger cards ---- */
-function renderUI(ui){
-  const box=$("cards"); 
-  if(!ui){ return; }
-  if(ui.type==="payment_options"){
-    box.innerHTML="";
-    const c=document.createElement("div"); c.className="card";
-    c.innerHTML=`<h4>Choose a payment method</h4><div class="opts"></div>`;
-    const o=c.querySelector(".opts");
-    ui.options.forEach(opt=>{ const b=document.createElement("button"); b.className="opt"; b.textContent=opt;
-      b.onclick=()=>{ clearSilence(); sendUI("select_payment",opt); }; o.appendChild(b); });
-    box.appendChild(c);
-  } else if(ui.type==="payment_form"){
-    box.innerHTML="";
-    const c=document.createElement("div"); c.className="card";
-    c.innerHTML=`<h4>${ui.method} payment (demo — type any number)</h4>
-      <div class="field"><input inputmode="numeric" placeholder="0000 0000 0000 0000" />
-      <button class="pay">Pay</button></div>`;
-    const inp=c.querySelector("input"), btn=c.querySelector(".pay");
-    const pay=()=>{ const v=inp.value.trim(); if(!v){inp.focus();return;} clearSilence(); sendUI("submit_payment",v); };
-    btn.onclick=pay; inp.onkeydown=e=>{if(e.key==="Enter")pay();}; inp.focus();
-    box.appendChild(c);
-  } else if(ui.type==="id_card"){
-    box.innerHTML="";
-    const c=document.createElement("div"); c.className="idcard";
-    c.innerHTML=`<div class="top"><b>${ui.hotel||""}</b><span style="font-size:11px;color:var(--muted)">GUEST ID</span></div>
-      <div class="row"><span>Name</span><span>${ui.title?ui.title+" ":""}${ui.name||""}</span></div>
-      <div class="row"><span>Room</span><span>${ui.room||""}</span></div>
-      <div class="row"><span>Ref</span><span>${ui.ref||""}</span></div>`;
-    box.appendChild(c);
-  }
-}
-function clearCards(){ $("cards").innerHTML=""; }
-
-/* ---- API helpers ---- */
-async function post(path,obj){ return fetch(API+path,{method:"POST",headers:H(),body:JSON.stringify(obj||{})}).then(r=>r.json()); }
 
 function handle(r,isSilence){
-  if(r.name)callMeta.name=r.name; if(r.title)callMeta.title=r.title;
-  if(r.room)callMeta.room=r.room; if(r.ref)callMeta.ref=r.ref;
-  if(isSilence){ if(r.reply)addMsg("bot",r.reply); }
-  else { if(r.transcript)addMsg("me",r.transcript); if(r.reply)addMsg("bot",r.reply); }
-  if(r.ui) renderUI(r.ui);
-  if(r.call_status==="ended"){ playAudio(r.audio,()=>endCallScreen()); return; }
-  playAudio(r.audio);
+  if(isSilence){ if(r.reply) addMsg("bot",r.reply); }
+  else { if(r.transcript) addMsg("me",r.transcript); if(r.reply) addMsg("bot",r.reply); }
+  if(r.call_status==="ended"){ play(r.audio,r.audio_type,()=>endScreen("Call ended", r.reply||"")); return; }
+  play(r.audio,r.audio_type);
 }
-async function sendUI(action,value){ const r=await post("/api/call/ui",{action,value}); handle(r,false); }
+async function post(p,body){ return fetch(API+p,{method:"POST",headers:H(),body:JSON.stringify(body||{})}).then(r=>r.json()); }
 async function sendText(t){ clearSilence(); setStatus("Thinking…"); const r=await post("/api/call/say",{text:t}); handle(r,false); }
 
-/* ---- voice ---- */
-async function startRec(){
-  try{
-    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-    mediaRec=new MediaRecorder(stream); chunks=[];
-    mediaRec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
-    mediaRec.onstop=async()=>{ stream.getTracks().forEach(t=>t.stop());
-      const blob=new Blob(chunks,{type:"audio/webm"}); chunks=[];
-      setStatus("Thinking…"); const fd=new FormData(); fd.append("audio",blob,"speech.webm"); fd.append("session",sessionId);
-      try{ const r=await fetch(API+"/api/call/say",{method:"POST",headers:{"X-Session-Id":sessionId},body:fd}).then(r=>r.json()); handle(r,false); }
-      catch(e){ addMsg("sys","(couldn't reach the server)"); setStatus("Your turn — listening…"); armSilence(); } };
-    mediaRec.start(); clearSilence(); setStatus("Listening… tap again to send");
-  }catch(e){ alert("Microphone access is needed for voice. You can type below instead."); }
-}
+async function startRec(){ try{
+  const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+  mediaRec=new MediaRecorder(stream); chunks=[];
+  mediaRec.ondataavailable=e=>{ if(e.data.size)chunks.push(e.data); };
+  mediaRec.onstop=async()=>{ stream.getTracks().forEach(t=>t.stop()); const blob=new Blob(chunks,{type:"audio/webm"}); chunks=[];
+    setStatus("Thinking…"); const fd=new FormData(); fd.append("audio",blob,"speech.webm"); fd.append("session",sid);
+    try{ const r=await fetch(API+"/api/call/say",{method:"POST",headers:{"X-Session-Id":sid},body:fd}).then(r=>r.json()); handle(r,false); }
+    catch(e){ addMsg("bot","Sorry, I couldn't reach the server. Try again?"); setStatus("Your turn — I’m listening…"); armSilence(); } };
+  mediaRec.start(); clearSilence(); setStatus("Listening… tap again to send");
+}catch(e){ alert("Microphone access is needed for voice. You can type below."); } }
 function stopRec(){ if(mediaRec&&mediaRec.state!=="inactive")mediaRec.stop(); }
 let rec=false;
-$("mic").addEventListener("click",()=>{ if(callState!=="active")return;
-  rec=!rec; $("mic").classList.toggle("rec",rec); $("mic").innerHTML=rec?"&#9209;":"&#127908;";
-  if(rec)startRec(); else stopRec(); });
+$("mic").addEventListener("click",()=>{ if(state!=="active")return; rec=!rec;
+  $("mic").classList.toggle("rec",rec); $("mic").innerHTML=rec?"&#9209;":"&#127908;"; if(rec)startRec(); else stopRec(); });
 
-/* ---- start / end ---- */
 async function startCall(){
-  show("call"); callState="ringing"; setConn(false); clearCards(); $("log").innerHTML="";
-  setStatus("Calling…"); setPhase("connecting…"); ringStart();
-  // wait for Render to wake (cold start)
-  let up=false;
-  for(let i=0;i<60;i++){ try{ const r=await fetch(API+"/api/health"); if(r.ok){up=true;break;} }catch(e){} await new Promise(r=>setTimeout(r,1500)); }
-  if(!up){ ringStop(); setStatus("Couldn't connect. Please try again."); return; }
-  // begin the call
-  try{
-    const r=await post("/api/call/start",{});
-    ringStop(); callState="active"; setPhase("connected"); setConn(true);
-    startTimer(); startHeartbeat();
-    addMsg("bot",r.reply);
-    if(r.call_status==="ended"){ playAudio(r.audio,()=>endCallScreen()); return; }
-    playAudio(r.audio);
+  show("call"); state="ringing"; setConn(false); $("log").innerHTML=""; setStatus("Calling…"); setPhase("connecting…"); ringStart();
+  let up=false; for(let i=0;i<60;i++){ try{ const r=await fetch(API+"/api/health"); if(r.ok){up=true;break;} }catch(e){} await new Promise(r=>setTimeout(r,1500)); }
+  if(!up){ ringStop(); setStatus("Couldn't connect. Try again."); return; }
+  try{ const r=await post("/api/call/start"); ringStop(); state="active"; setPhase("connected"); setConn(true);
+    startTimer(); startHB(); addMsg("bot",r.reply);
+    if(r.call_status==="ended"){ play(r.audio,r.audio_type,()=>endScreen()); return; } play(r.audio,r.audio_type);
   }catch(e){ ringStop(); setStatus("Call failed. Try again."); }
 }
+function endScreen(title,msg){ state="ended"; stopTimers(); ringStop(); clearSilence(); setSpk(false);
+  if(title)$("endTitle").textContent=title; if(msg)$("endMsg").textContent=msg; show("ended"); }
 
-function endCallScreen(){
-  callState="ended"; stopTimers(); ringStop(); clearSilence(); setSpeaking(false);
-  const s=$("endsum");
-  s.innerHTML=`<h3>Call Summary</h3>`+
-    row("Guest", (callMeta.title?callMeta.title+" ":"")+(callMeta.name||"—"))+
-    row("Room", callMeta.room||"—")+
-    row("Reference", callMeta.ref||"—");
-  show("ended");
-}
-function row(k,v){ return `<div class="r"><span>${k}</span><span>${v}</span></div>`; }
-
-$("callBtn").addEventListener("click", startCall);
-$("again").addEventListener("click", ()=>{ rec=false; $("mic").classList.remove("rec"); $("mic").innerHTML="&#127908;"; show("idle"); });
-$("end").addEventListener("click", async()=>{ clearSilence();
-  try{ await post("/api/call/end",{}); }catch(e){} endCallScreen(); });
-$("sendType").addEventListener("click", ()=>{ const t=$("type").value.trim(); if(!t)return; $("type").value=""; sendText(t); });
-$("type").addEventListener("keydown", e=>{ if(e.key==="Enter"){ const t=$("type").value.trim(); if(!t)return; $("type").value=""; sendText(t);} });
+$("callBtn").addEventListener("click",startCall);
+$("again").addEventListener("click",()=>{ rec=false; $("mic").classList.remove("rec"); $("mic").innerHTML="&#127908;"; show("idle"); });
+$("end").addEventListener("click",async()=>{ clearSilence(); try{ await post("/api/call/end"); }catch(e){} endScreen(); });
+$("sendType").addEventListener("click",()=>{ const t=$("type").value.trim(); if(!t)return; $("type").value=""; sendText(t); });
+$("type").addEventListener("keydown",e=>{ if(e.key==="Enter"){ const t=$("type").value.trim(); if(!t)return; $("type").value=""; sendText(t);} });
+$("type").addEventListener("input",clearSilence);
 </script>
 </body>
 </html>

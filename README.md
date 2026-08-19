@@ -153,6 +153,34 @@ Ready-to-use client: **`frontend.config.js`** (`DavenCall.start / say / ui /
 silence / heartbeat / end`). The v2 free-chat API (`/api/text`, `/api/chat`) is
 still available unchanged.
 
+## V4 — Groq-powered (human-like)
+
+The brain is now an **LLM** (Groq `openai/gpt-oss-120b`), with **Whisper** STT
+and **Orpheus** TTS — all via Groq. Daven now speaks naturally, varies every
+reply, uses the guest's name, never guesses gender, and handles messy transcripts
+via context. Groq also does STT, so the heavy local Whisper is gone → the app is
+light and fast (cheap/free Render plan is enough).
+
+**Multi-layer fallbacks:** if Groq is down → STT falls back to local whisper,
+replies fall back to the tag engine (`receptionist.py`), TTS falls back to
+edge-tts / gTTS. If Groq TTS fails (e.g. terms not accepted), it cools down for
+10 min and uses the fallback voice.
+
+### Setup (required)
+1. Set `GROQ_API_KEY` (Render dashboard → Environment, or `.env` locally).
+2. For **Groq TTS**, open the Groq console and **accept the Orpheus model terms**
+   (until then, TTS uses the edge-tts male voice automatically).
+3. Tweak `GROQ_CHAT_MODEL` / `GROQ_TTS_VOICE` in env if desired.
+
+### API (unchanged shape; now conversational)
+Chat: `POST /api/text {text}`, `POST /api/chat (audio)`, `GET /api/greeting`.
+Call: `POST /api/call/start`, `/api/call/say {text|audio}`, `/api/call/silence`,
+`/api/call/heartbeat`, `/api/call/end`. Replies now include `audio_type`
+(`audio/wav` for Groq, `audio/mpeg` for fallback) and `engine` (`llm`/`tags`).
+
+> Phase 2 (scripted payment + ID-card UI triggers from `callflow.py`) is parked
+> and will be layered back on top of the LLM next.
+
 ## Notes & next steps
 
 - **Whisper accuracy:** "tiny" is fastest but least accurate. For a sharper ear,

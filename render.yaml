@@ -1,28 +1,26 @@
-# Render Blueprint. Deploy with: New + Blueprint (point at this repo).
+# Render Blueprint. Deploy: New + Blueprint (point at this repo).
 services:
   - type: web
     name: ai-receptionist
     runtime: docker
-    # Whisper needs RAM. Use at least a 1 GB plan (e.g. "standard").
-    # The 512 MB free/starter tier will usually run out of memory.
-    plan: standard
+    # Now LIGHTWEIGHT: Groq handles LLM/STT/TTS, so no heavy local model.
+    # Starter (or even Free) is enough. No 1GB+ requirement anymore.
+    plan: starter
     healthCheckPath: /api/health
     envVars:
       - key: HOTEL_NAME
         value: City Resort Hotel
       - key: RECEPTIONIST_NAME
         value: Daven
-      - key: HOTEL_LOCATION
-        value: 12 Kingsway Road, Osogbo, Osun State, Nigeria
-      - key: HOTEL_PHONE
-        value: "+234 800 000 0000"
-      - key: HOTEL_EMAIL
-        value: stay@cityresorthotel.com
-      - key: TTS_PROVIDER
-        value: edge
-      - key: TTS_VOICE
-        value: en-US-GuyNeural   # male voice (edge-tts)
-      - key: STT_MODEL
-        value: tiny
+      - key: GROQ_CHAT_MODEL
+        value: openai/gpt-oss-120b
+      - key: GROQ_STT_MODEL
+        value: whisper-large-v3-turbo
+      - key: GROQ_TTS_MODEL
+        value: canopylabs/orpheus-v1-english   # accept terms in Groq console to enable
+      - key: GROQ_TTS_VOICE
+        value: troy
+      - key: GROQ_API_KEY
+        sync: false          # <-- set this SECRET in the Render dashboard (do NOT commit it)
       - key: PYTHON_VERSION
         value: "3.11.9"

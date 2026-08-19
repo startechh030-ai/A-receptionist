@@ -1,7 +1,8 @@
 Flask>=3.0,<4.0
 flask-cors>=4.0,<5.0
-faster-whisper>=1.0.0,<1.1
+requests>=2.31
 edge-tts>=6.1
 gTTS>=2.0,<2.1
-requests>=2.31
 gunicorn>=21.2,<23.0
+# NOTE: faster-whisper is now OPTIONAL (Groq handles STT). Install it only if you
+# want a local offline STT fallback:  pip install faster-whisper
